@@ -2,7 +2,6 @@ const WAMR_ZIP: &str = "https://github.com/bytecodealliance/wasm-micro-runtime/a
 const WAMR_DIR: &str = "wasm-micro-runtime-WAMR-2.1.0";
 
 fn main() {
-    #[cfg(feature = "wamr")]
     {
         use cmake::Config;
         use std::{env, path::PathBuf};
@@ -41,7 +40,29 @@ fn main() {
         }
         */
 
-        let dst = Config::new(wamr_dir.clone())
+        let mut wamr_build_target = "";
+        let mut wamr_android_abi = "";
+
+        let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+        if target_os.contains("android") {
+            let target = env::var("CARGO_CFG_TARGET").unwrap();
+            wamr_build_target = match target.as_str() {
+                "aarch64-linux-android" => "AARCH64",
+                "armv7-linux-android" => "ARMV7A",
+                "i686-linux-android" => "X86",
+                "x86_64-linux-android" => "X86_64",
+                _ => ""
+            };
+            wamr_android_abi = match target.as_str() {
+                "aarch64-linux-android" => "arm64-v8a",
+                "armv7-linux-android" => "armeabi-v7a",
+                "i686-linux-android" => "x86",
+                "x86_64-linux-android" => "x86_64",
+                _ => ""
+            };
+        }
+
+        let dst= Config::new(wamr_dir.clone())
             .always_configure(true)
             .generator("Unix Makefiles")
             .define(
@@ -53,6 +74,8 @@ fn main() {
                 },
             )
             .define("WAMR_BUILD_AOT", "0")
+            .define("WAMR_BUILD_TARGET", wamr_build_target)
+            .define("ANDROID_ABI", wamr_android_abi)
             //.define("WAMR_BUILD_TAIL_CALL", "1")
             //.define("WAMR_BUILD_DUMP_CALL_STACK", "1")
             // .define("WAMR_BUILD_CUSTOM_NAME_SECTION", "1")
