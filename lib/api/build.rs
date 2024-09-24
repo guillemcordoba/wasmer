@@ -135,7 +135,8 @@ fn main() {
         );
         println!("cargo:rustc-link-lib=vmlib");
 
-        let bindings = bindgen::Builder::default()
+
+        let mut bindings = bindgen::Builder::default()
             .header(
                 wamr_dir
                     .join("core/iwasm/include/wasm_c_api.h")
@@ -155,7 +156,17 @@ fn main() {
                     .unwrap(),
             )
             .derive_default(true)
-            .derive_debug(true)
+            .derive_debug(true);
+        
+        if target_os.as_str() == "android" {
+            let target = std::env::var("TARGET").expect("Can't find the TARGET triple variable");
+            let sysroot = std::env::var("BINDGEN_EXTRA_CLANG_ARGS").expect("Need to set the BINDGEN_EXTRA_CLANG_ARGS environment variable to the sysroot directory ");
+            bindings = bindings             
+                .clang_args([format!("-I{sysroot}/usr/include"),format!("-I{sysroot}/usr/include/{target}")]);
+        }
+                
+
+        let bindings = bindings
             .generate()
             .expect("Unable to generate bindings");
         let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
