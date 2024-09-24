@@ -2,6 +2,7 @@ const WAMR_ZIP: &str = "https://github.com/bytecodealliance/wasm-micro-runtime/a
 const WAMR_DIR: &str = "wasm-micro-runtime-WAMR-2.1.0";
 
 fn main() {
+    #[cfg(feature = "wamr")]
     {
         use cmake::Config;
         use std::{env, path::PathBuf};
@@ -40,29 +41,30 @@ fn main() {
         }
         */
 
-        let mut wamr_build_target = "";
-        let mut wamr_android_abi = "";
+        /* Taken from https://github.com/bytecodealliance/wasm-micro-runtime/tree/21330990a8f5963dd09d81e491ca4a34f7196ab1/product-mini#android */
 
         let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-        if target_os.as_str() == "android" {
+        let dst= if target_os.as_str() == "android" {
             let target = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-            wamr_build_target = match target.as_str() {
+            let wamr_build_target = match target.as_str() {
                 "aarch64" => "AARCH64",
                 "armv7" => "ARMV7A",
                 "i686" => "X86",
                 "x86_64" => "X86_64",
                 _ => ""
             };
-            wamr_android_abi = match target.as_str() {
+            let wamr_android_abi = match target.as_str() {
                 "aarch64" => "arm64-v8a",
                 "armv7" => "armeabi-v7a",
                 "i686" => "x86",
                 "x86_64" => "x86_64",
                 _ => ""
             };
-        }
 
-        let dst= Config::new(wamr_dir.clone())
+            std::fs::create_dir(wamr_dir.clone().join("product-mini/platforms/android/build")).expect("Could not create build directory");
+            Config::new(wamr_dir.clone().join("product-mini/platforms/android"))
+            .out_dir(wamr_dir.clone().join("product-mini/platforms/android"))
+            .build_target("all")
             .always_configure(true)
             .generator("Unix Makefiles")
             .define(
@@ -74,7 +76,7 @@ fn main() {
                 },
             )
             .define("WAMR_BUILD_AOT", "0")
-            .define("WAMR_BUILD_TARGET", wamr_build_target)
+            .define("WAMR_BUILD_TARGET", wamr_build_target) 
             .define("ANDROID_ABI", wamr_android_abi)
             //.define("WAMR_BUILD_TAIL_CALL", "1")
             //.define("WAMR_BUILD_DUMP_CALL_STACK", "1")
@@ -91,7 +93,38 @@ fn main() {
             .define("WAMR_BUILD_SHARED_MEMORY", "1")
             .define("WAMR_BUILD_MULTI_MODULE", "0")
             .define("WAMR_DISABLE_HW_BOUND_CHECK", "1")
-            .build();
+            .build()
+        } else {
+            Config::new(wamr_dir.clone())
+            .always_configure(true)
+            .generator("Unix Makefiles")
+            .define(
+                "CMAKE_BUILD_TYPE",
+                if cfg!(debug_assertions) {
+                    "RelWithDebInfo"
+                } else {
+                    "Release"
+                },
+            )
+            .define("WAMR_BUILD_AOT", "0")
+            //.define("WAMR_BUILD_TAIL_CALL", "1")
+            //.define("WAMR_BUILD_DUMP_CALL_STACK", "1")
+            // .define("WAMR_BUILD_CUSTOM_NAME_SECTION", "1")
+            // .define("WAMR_BUILD_LOAD_CUSTOM_SECTION", "1")
+            .define("WAMR_BUILD_BULK_MEMORY", "1")
+            .define("WAMR_BUILD_REF_TYPES", "1")
+            .define("WAMR_BUILD_SIMD", "1")
+            .define("WAMR_ENABLE_FAST_INTERP", "1")
+            .define("WAMR_BUILD_LIB_PTHREAD", "1")
+            .define("WAMR_BUILD_LIB_WASI_THREADS", "0")
+            .define("WAMR_BUILD_LIBC_WASI", "0")
+            .define("WAMR_BUILD_LIBC_BUILTIN", "0")
+            .define("WAMR_BUILD_SHARED_MEMORY", "1")
+            .define("WAMR_BUILD_MULTI_MODULE", "0")
+            .define("WAMR_DISABLE_HW_BOUND_CHECK", "1")
+            .build()
+        };
+
 
         // Check output of `cargo build --verbose`, should see something like:
         // -L native=/path/runng/target/debug/build/runng-sys-abc1234/out
