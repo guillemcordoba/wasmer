@@ -44,20 +44,20 @@ fn main() {
         let mut wamr_android_abi = "";
 
         let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-        if target_os.contains("android") {
-            let target = env::var("CARGO_CFG_TARGET").unwrap();
+        if target_os.as_str() == "android" {
+            let target = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
             wamr_build_target = match target.as_str() {
-                "aarch64-linux-android" => "AARCH64",
-                "armv7-linux-android" => "ARMV7A",
-                "i686-linux-android" => "X86",
-                "x86_64-linux-android" => "X86_64",
+                "aarch64" => "AARCH64",
+                "armv7" => "ARMV7A",
+                "i686" => "X86",
+                "x86_64" => "X86_64",
                 _ => ""
             };
             wamr_android_abi = match target.as_str() {
-                "aarch64-linux-android" => "arm64-v8a",
-                "armv7-linux-android" => "armeabi-v7a",
-                "i686-linux-android" => "x86",
-                "x86_64-linux-android" => "x86_64",
+                "aarch64" => "arm64-v8a",
+                "armv7" => "armeabi-v7a",
+                "i686" => "x86",
+                "x86_64" => "x86_64",
                 _ => ""
             };
         }
