@@ -53,7 +53,7 @@ impl WasmerException {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 const UNWIND_DATA_REG: (i32, i32) = (0, 1); // RAX, RDX
 
 #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
