@@ -141,7 +141,7 @@ fn build_wamr() {
             item_info: bindgen::callbacks::ItemInfo<'_>,
         ) -> Option<String> {
             if item_info.name.starts_with("wasm") {
-                let new_name = format!("wamr_{}", item_info.name);
+                let new_name = format!("{}", item_info.name);
                 unsafe {
                     WAMR_RENAMED.push((item_info.name.to_string(), new_name.clone()));
                 }
@@ -292,7 +292,7 @@ fn build_v8() {
             item_info: bindgen::callbacks::ItemInfo<'_>,
         ) -> Option<String> {
             if item_info.name.starts_with("wasm") {
-                let new_name = format!("wee8_{}", item_info.name);
+                let new_name = format!("{}", item_info.name);
                 unsafe {
                     WEE8_RENAMED.push((item_info.name.to_string(), new_name.clone()));
                 }
